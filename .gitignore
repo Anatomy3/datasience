@@ -1,0 +1,19 @@
+# Folder Virtual Environment (jika ada)
+venv/
+env/
+.venv/
+
+# Folder cache Python
+__pycache__/
+*.pyc
+
+# Folder output/hasil generate
+exports/
+
+# File spesifik sistem operasi dan editor
+.DS_Store
+.vscode/
+.idea/
+
+# File sensitif (jika ada)
+.env
