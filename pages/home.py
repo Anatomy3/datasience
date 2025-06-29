@@ -8,6 +8,76 @@ from dash import html, dcc
 import plotly.express as px 
 import plotly.graph_objects as go 
 
+# =====================================================================
+#  BAGIAN BARU: Fungsi untuk Membuat Section 'Tentang Tim' Sesuai Gaya
+# =====================================================================
+def create_team_section_styled(colors):
+    """
+    Membuat bagian 'Tentang Tim' dengan layout gambar di samping teks,
+    sesuai dengan referensi yang diberikan.
+    """
+    
+    # --- Profil Lingga ---
+    lingga_profile = dbc.Row([
+        # Kolom Teks
+        dbc.Col([
+            html.H3("Lingga Dwi Satria Vigio", className="fw-bold"),
+            html.H6("LEAD DEVELOPER & MACHINE LEARNING", className="text-muted mb-3", style={'letterSpacing': '1px'}),
+            html.P(
+                "Bertanggung jawab atas arsitektur backend, pemrosesan data, "
+                "pengembangan model machine learning, dan memastikan semua "
+                "logika aplikasi berjalan dengan lancar dari data cleaning hingga deployment model.",
+                className="text-secondary"
+            ),
+            html.Div([
+                html.A(html.I(className="fas fa-envelope fa-lg"), href="mailto:lingga22si@mahasiswa.pcr.ac.id", className="text-dark me-3", title="Email"),
+                html.A(html.I(className="fab fa-linkedin fa-lg"), href="#", target="_blank", className="text-dark me-3", title="LinkedIn"),
+                html.A(html.I(className="fab fa-github fa-lg"), href="https://github.com/lingga", target="_blank", className="text-dark", title="GitHub")
+            ], className="mt-4")
+        ], md=7, className="d-flex flex-column justify-content-center"),
+
+        # Kolom Gambar
+        dbc.Col([
+            # Ganti 'lingga.png' dengan nama file gambar Anda di folder /assets
+            html.Img(src="/assets/lingga.png", className="rounded-circle img-fluid shadow-lg", style={'border': f'5px solid {colors["primary"]}'})
+        ], md=5)
+    ], className="align-items-center mb-5")
+    
+    # --- Profil Azzahara ---
+    azzahara_profile = dbc.Row([
+        # Kolom Gambar (di kiri untuk variasi)
+        dbc.Col([
+            # Ganti 'azzahara.png' dengan nama file gambar Anda di folder /assets
+            html.Img(src="/assets/azzahara.png", className="rounded-circle img-fluid shadow-lg", style={'border': f'5px solid {colors["primary"]}'})
+        ], md=5, className="order-md-1"),
+        
+        # Kolom Teks (di kanan untuk variasi)
+        dbc.Col([
+            html.H3("Azzahara Tunisyah", className="fw-bold"),
+            html.H6("LEAD ANALYST & UI/UX DESIGNER", className="text-muted mb-3", style={'letterSpacing': '1px'}),
+            html.P(
+                "Memimpin analisis data eksploratif (EDA), visualisasi data, dan storytelling. "
+                "Bertugas merancang user interface yang intuitif dan menarik, serta menerjemahkan "
+                "data kompleks menjadi insight yang mudah dipahami.",
+                className="text-secondary"
+            ),
+            html.Div([
+                html.A(html.I(className="fas fa-envelope fa-lg"), href="mailto:azzahara22si@mahasiswa.pcr.ac.id", className="text-dark me-3", title="Email"),
+                html.A(html.I(className="fab fa-linkedin fa-lg"), href="#", target="_blank", className="text-dark me-3", title="LinkedIn"),
+                html.A(html.I(className="fab fa-github fa-lg"), href="https://github.com/azzahara", target="_blank", className="text-dark", title="GitHub")
+            ], className="mt-4")
+        ], md=7, className="d-flex flex-column justify-content-center order-md-2")
+        
+    ], className="align-items-center mb-5")
+
+    return dbc.Container([
+        html.Hr(className="my-5"),
+        html.H2("Tim Pengembang", className="text-center mb-5 fw-bold display-5", style={'color': colors['darker']}),
+        lingga_profile,
+        azzahara_profile
+    ], fluid=True, className="py-5 bg-light")
+
+
 def layout(df, colors): 
     """Create home page layout""" 
      
@@ -156,10 +226,10 @@ def layout(df, colors):
                                             style={ 
                                                 'width': '100%', 
                                                 'height': 'auto', 
-                                                'maxWidth': '350px',  # Diperbesar dari 300px 
-                                                'borderRadius': '10px 10px 0 0',  # Hanya rounded top 
+                                                'maxWidth': '350px',
+                                                'borderRadius': '10px 10px 0 0',
                                                 'display': 'block', 
-                                                'marginBottom': '0'  # No margin bottom 
+                                                'marginBottom': '0'
                                             }, 
                                             className="img-fluid" 
                                         ) 
@@ -171,7 +241,7 @@ def layout(df, colors):
                                            'justifyContent': 'center' 
                                        }) 
                                      
-                                ], style={'height': '100%'})  # Full height container 
+                                ], style={'height': '100%'})
                             ], md=4) 
                         ]) 
                     ], style={ 
@@ -260,14 +330,19 @@ def layout(df, colors):
                 ) 
             ], md=4, className="mb-3") 
         ]), 
-         
+                 
         # Download Section 
         dbc.Row([ 
             dbc.Col([ 
                 html.Hr(className="my-5"), 
                 create_download_section(colors) 
             ]) 
-        ]) 
+        ]),
+
+        # =====================================================================
+        #  BAGIAN TIM DIPINDAHKAN KE SINI (POSISI AKHIR)
+        # =====================================================================
+        create_team_section_styled(colors),
          
     ], fluid=True, className="py-4") 
 
@@ -371,7 +446,6 @@ def create_country_chart(df, colors):
 def create_key_insights(df, colors): 
     """Create key insights section""" 
      
-    # Calculate key metrics 
     avg_salary = df['salary_in_usd'].mean() 
     max_salary = df['salary_in_usd'].max() 
     min_salary = df['salary_in_usd'].min() 
@@ -383,23 +457,23 @@ def create_key_insights(df, colors):
     insights = [ 
         { 
             'icon': '💰', 
-            'title': 'Salary Range', 
+            'title': 'Rentang Gaji', 
             'text': f'Gaji berkisar dari ${min_salary:,.0f} hingga ${max_salary:,.0f} dengan rata-rata ${avg_salary:,.0f}' 
         }, 
         { 
             'icon': '📈', 
-            'title': 'Experience Premium', 
-            'text': f'Senior level mendapat gaji {(exp_salary.get("SE", 0) / exp_salary.get("EN", 1)):.1f}x lebih tinggi dari entry level' 
+            'title': 'Premium Pengalaman', 
+            'text': f'Level senior mendapat gaji {(exp_salary.get("SE", 0) / exp_salary.get("EN", 1)):.1f}x lebih tinggi dari level pemula' 
         }, 
         { 
             'icon': '🌟', 
-            'title': 'Top Job Title', 
-            'text': f'{top_job} adalah posisi paling umum dengan {df[df["job_title"] == top_job].shape[0]} openings' 
+            'title': 'Jabatan Teratas', 
+            'text': f'{top_job} adalah posisi paling umum dengan {df[df["job_title"] == top_job].shape[0]} lowongan' 
         }, 
         { 
             'icon': '🌍', 
-            'title': 'Leading Country', 
-            'text': f'{top_country} memimpin dengan {df[df["company_location"] == top_country].shape[0]} companies' 
+            'title': 'Negara Terkemuka', 
+            'text': f'{top_country} memimpin dengan {df[df["company_location"] == top_country].shape[0]} perusahaan' 
         } 
     ] 
      
@@ -438,7 +512,6 @@ def create_download_section(colors):
                     html.Div([ 
                         html.H5("📥 Quick Downloads", className="text-primary fw-bold mb-4 text-center"), 
                          
-                        # Download Cards 
                         dbc.Row([ 
                             dbc.Col([ 
                                 dbc.Card([ 
@@ -446,11 +519,11 @@ def create_download_section(colors):
                                         html.Div([ 
                                             html.I(className="fas fa-file-csv fa-2x text-success mb-3"), 
                                             html.H6("Dataset (CSV)", className="fw-bold mb-2"), 
-                                            html.P("Download complete dataset", className="text-muted small mb-3"), 
+                                            html.P("Unduh dataset lengkap", className="text-muted small mb-3"), 
                                             dbc.Button([ 
                                                 html.I(className="fas fa-download me-2"), 
-                                                "Download CSV" 
-                                            ], color="success", size="sm", className="w-100", id="btn-download-csv-home") # <-- ID DITAMBAHKAN DI SINI
+                                                "Unduh CSV" 
+                                            ], color="success", size="sm", className="w-100", id="btn-download-csv-home")
                                         ], className="text-center") 
                                     ]) 
                                 ], className="h-100 shadow-sm border-0", 
@@ -462,11 +535,11 @@ def create_download_section(colors):
                                     dbc.CardBody([ 
                                         html.Div([ 
                                             html.I(className="fas fa-chart-line fa-2x text-info mb-3"), 
-                                            html.H6("Analysis Report", className="fw-bold mb-2"), 
-                                            html.P("Summary insights & findings", className="text-muted small mb-3"), 
+                                            html.H6("Laporan Analisis", className="fw-bold mb-2"), 
+                                            html.P("Ringkasan insight & temuan", className="text-muted small mb-3"), 
                                             dbc.Button([ 
                                                 html.I(className="fas fa-file-pdf me-2"), 
-                                                "Download PDF" 
+                                                "Unduh PDF" 
                                             ], color="info", size="sm", className="w-100") 
                                         ], className="text-center") 
                                     ]) 
@@ -479,11 +552,11 @@ def create_download_section(colors):
                                     dbc.CardBody([ 
                                         html.Div([ 
                                             html.I(className="fas fa-robot fa-2x text-warning mb-3"), 
-                                            html.H6("ML Model", className="fw-bold mb-2"), 
-                                            html.P("Trained prediction model", className="text-muted small mb-3"), 
+                                            html.H6("Model ML", className="fw-bold mb-2"), 
+                                            html.P("Model prediksi yang sudah dilatih", className="text-muted small mb-3"), 
                                             dbc.Button([ 
                                                 html.I(className="fas fa-download me-2"), 
-                                                "Download Model" 
+                                                "Unduh Model" 
                                             ], color="warning", size="sm", className="w-100") 
                                         ], className="text-center") 
                                     ]) 
@@ -497,11 +570,10 @@ def create_download_section(colors):
              
             html.Hr(), 
              
-            # Additional Info 
             html.Div([ 
                 html.P([ 
                     html.I(className="fas fa-info-circle me-2 text-primary"), 
-                    "Semua file download tersedia dalam format yang kompatibel dengan tools analisis populer" 
+                    "Semua file unduhan tersedia dalam format yang kompatibel dengan alat analisis populer." 
                 ], className="text-center text-muted mb-0 small") 
             ]) 
         ]) 
