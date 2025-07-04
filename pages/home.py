@@ -89,6 +89,76 @@ def create_team_section_styled(colors):
     ], fluid=True, className="py-5 bg-light")
 
 
+# =====================================================================
+#  BAGIAN BARU: Fungsi untuk Membuat Section 'Tentang Tim' Sesuai Gaya
+# =====================================================================
+def create_team_section_styled(colors):
+    """
+    Membuat bagian 'Tentang Tim' dengan layout gambar di samping teks,
+    sesuai dengan referensi yang diberikan.
+    """
+    
+    # --- Profil Lingga ---
+    lingga_profile = dbc.Row([
+        # Kolom Teks
+        dbc.Col([
+            html.H3("Lingga Dwi Satria Vigio", className="fw-bold"),
+            html.H6("LEAD DEVELOPER & MACHINE LEARNING", className="text-muted mb-3", style={'letterSpacing': '1px'}),
+            html.P(
+                "Bertanggung jawab atas arsitektur backend, pemrosesan data, "
+                "pengembangan model machine learning, dan memastikan semua "
+                "logika aplikasi berjalan dengan lancar dari data cleaning hingga deployment model.",
+                className="text-secondary"
+            ),
+            html.Div([
+                html.A(html.I(className="fas fa-envelope fa-lg"), href="mailto:lingga22si@mahasiswa.pcr.ac.id", className="text-dark me-3", title="Email"),
+                html.A(html.I(className="fab fa-linkedin fa-lg"), href="#", target="_blank", className="text-dark me-3", title="LinkedIn"),
+                html.A(html.I(className="fab fa-github fa-lg"), href="https://github.com/lingga", target="_blank", className="text-dark", title="GitHub")
+            ], className="mt-4")
+        ], md=7, className="d-flex flex-column justify-content-center"),
+
+        # Kolom Gambar
+        dbc.Col([
+            # Ganti 'lingga.png' dengan nama file gambar Anda di folder /assets
+            html.Img(src="/assets/lingga.png", className="rounded-circle img-fluid shadow-lg", style={'border': f'5px solid {colors["primary"]}'})
+        ], md=5)
+    ], className="align-items-center mb-5")
+    
+    # --- Profil Azzahara ---
+    azzahara_profile = dbc.Row([
+        # Kolom Gambar (di kiri untuk variasi)
+        dbc.Col([
+            # Ganti 'azzahara.png' dengan nama file gambar Anda di folder /assets
+            html.Img(src="/assets/azzahara.png", className="rounded-circle img-fluid shadow-lg", style={'border': f'5px solid {colors["primary"]}'})
+        ], md=5, className="order-md-1"),
+        
+        # Kolom Teks (di kanan untuk variasi)
+        dbc.Col([
+            html.H3("Azzahara Tunisyah", className="fw-bold"),
+            html.H6("LEAD ANALYST & UI/UX DESIGNER", className="text-muted mb-3", style={'letterSpacing': '1px'}),
+            html.P(
+                "Memimpin analisis data eksploratif (EDA), visualisasi data, dan storytelling. "
+                "Bertugas merancang user interface yang intuitif dan menarik, serta menerjemahkan "
+                "data kompleks menjadi insight yang mudah dipahami.",
+                className="text-secondary"
+            ),
+            html.Div([
+                html.A(html.I(className="fas fa-envelope fa-lg"), href="mailto:azzahara22si@mahasiswa.pcr.ac.id", className="text-dark me-3", title="Email"),
+                html.A(html.I(className="fab fa-linkedin fa-lg"), href="#", target="_blank", className="text-dark me-3", title="LinkedIn"),
+                html.A(html.I(className="fab fa-github fa-lg"), href="https://github.com/azzahara", target="_blank", className="text-dark", title="GitHub")
+            ], className="mt-4")
+        ], md=7, className="d-flex flex-column justify-content-center order-md-2")
+        
+    ], className="align-items-center mb-5")
+
+    return dbc.Container([
+        html.Hr(className="my-5"),
+        html.H2("Tim Pengembang", className="text-center mb-5 fw-bold display-5", style={'color': colors['darker']}),
+        lingga_profile,
+        azzahara_profile
+    ], fluid=True, className="py-5 bg-light")
+
+
 def layout(df, colors): 
     """Create home page layout""" 
      
@@ -180,6 +250,7 @@ def layout(df, colors):
         ], className="mt-5"), 
 
         dbc.Row([ 
+<<<<<<< HEAD
             # Left Column - Form Input
             dbc.Col([
                 dbc.Card([
@@ -336,6 +407,94 @@ def layout(df, colors):
                     ])
                 ], className="shadow-sm border-0")
             ], md=7)
+=======
+            dbc.Col([ 
+                dbc.Card([ 
+                    dbc.CardBody([ 
+                        dbc.Row([ 
+                            # Left Side - Description 
+                            dbc.Col([ 
+                                html.Div([ 
+                                    html.H4([ 
+                                        html.I(className="fas fa-magic me-2", style={'color': colors['primary']}), 
+                                        "Prediksi Gaji Anda" 
+                                    ], className="fw-bold mb-3"), 
+                                    html.P([ 
+                                        "Gunakan model Machine Learning kami untuk memprediksi gaji Data Scientist ", 
+                                        "berdasarkan pengalaman, lokasi, tipe pekerjaan, dan faktor lainnya." 
+                                    ], className="mb-3 text-muted"), 
+                                     
+                                    # Features List 
+                                    html.Ul([ 
+                                        html.Li([ 
+                                            html.I(className="fas fa-check-circle me-2 text-success"), 
+                                            "Random Forest Model dengan akurasi 100%" 
+                                        ], className="mb-2"), 
+                                        html.Li([ 
+                                            html.I(className="fas fa-check-circle me-2 text-success"), 
+                                            "Berdasarkan 3,755+ data real" 
+                                        ], className="mb-2"), 
+                                        html.Li([ 
+                                            html.I(className="fas fa-check-circle me-2 text-success"), 
+                                            "Prediksi instant dan akurat" 
+                                        ], className="mb-2"), 
+                                        html.Li([ 
+                                            html.I(className="fas fa-check-circle me-2 text-success"), 
+                                            "Breakdown gaji bulanan & harian" 
+                                        ]) 
+                                    ], className="list-unstyled mb-4"), 
+                                     
+                                    dbc.Button([ 
+                                        html.I(className="fas fa-rocket me-2"), 
+                                        "Mulai Prediksi" 
+                                    ],  
+                                    color="primary",  
+                                    size="lg",  
+                                    href="/prediction", 
+                                    style={'background': colors['gradient'], 'border': 'none'}) 
+                                ]) 
+                            ], md=8), 
+                             
+                            # Right Side - Preview/Demo (UPDATED) 
+                            dbc.Col([ 
+                                html.Div([ 
+                                    # Image preview - larger and touch bottom (NO "Sample Prediction" text) 
+                                    html.Div([ 
+                                        html.Img( 
+                                            src="/assets/image.png", 
+                                            style={ 
+                                                'width': '100%', 
+                                                'height': 'auto', 
+                                                'maxWidth': '350px',
+                                                'borderRadius': '10px 10px 0 0',
+                                                'display': 'block', 
+                                                'marginBottom': '0'
+                                            }, 
+                                            className="img-fluid" 
+                                        ) 
+                                    ], className="text-center",  
+                                       style={ 
+                                           'height': '100%',  
+                                           'display': 'flex',  
+                                           'alignItems': 'flex-end', 
+                                           'justifyContent': 'center' 
+                                       }) 
+                                     
+                                ], style={'height': '100%'})
+                            ], md=4) 
+                        ]) 
+                    ], style={ 
+                        'backgroundColor': '#ffffff !important', 
+                        'background': '#ffffff !important' 
+                    }) 
+                ], className="shadow-sm border-0 prediction-card", 
+                   style={ 
+                       'backgroundColor': '#ffffff !important', 
+                       'background': '#ffffff !important', 
+                       'borderTop': f'4px solid {colors["primary"]}' 
+                   }) 
+            ]) 
+>>>>>>> bdf48619c87d4b443cb20c721748bf3e5fc02bbb
         ], className="mb-5"), 
          
         # Key Insights Section   
