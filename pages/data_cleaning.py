@@ -1,435 +1,520 @@
 """
-EDA & Visualisasi Page
-Interactive exploratory data analysis with filters
+Data Cleaning Page
+Data preprocessing and cleaning analysis
 """
 
 import dash_bootstrap_components as dbc
-from dash import html, dcc, Input, Output, callback
-import plotly.express as px
-import plotly.graph_objects as go
+from dash import html, dash_table, dcc
 import pandas as pd
-import numpy as np
+import plotly.express as px
 
 def layout(df, colors):
-    """Create EDA page layout"""
+    """Create data cleaning page layout"""
     
-    return html.Div([
-        # Page Header
-        dbc.Container([
-            dbc.Row([
-                dbc.Col([
-                    html.Div([
-                        html.H1([
-                            html.I(className="fas fa-chart-line me-3", style={'color': colors['primary']}),
-                            "EDA & Visualisasi"
-                        ], className="display-5 fw-bold mb-3"),
-                        html.P("Eksplorasi data interaktif dengan filter dan visualisasi mendalam",
-                              className="lead text-muted")
-                    ], className="text-center py-4")
-                ])
-            ])
-        ], fluid=True, className="bg-light"),
+    return dbc.Container([
         
-        dbc.Container([
-            # Filter Controls
-            dbc.Row([
-                dbc.Col([
-                    dbc.Card([
-                        dbc.CardHeader([
-                            html.H5([
-                                html.I(className="fas fa-filter me-2"),
-                                "Filter Data"
-                            ], className="mb-0")
-                        ]),
-                        dbc.CardBody([
-                            dbc.Row([
-                                dbc.Col([
-                                    html.Label("Experience Level:", className="fw-bold mb-2"),
-                                    dcc.Dropdown(
-                                        id='experience-filter',
-                                        options=[{'label': 'All', 'value': 'all'}] + 
-                                               [{'label': exp_mapping(x), 'value': x} 
-                                                for x in sorted(df['experience_level'].unique())],
-                                        value='all',
-                                        clearable=False,
-                                        style={'borderRadius': '8px'}
-                                    )
-                                ], md=3),
-                                dbc.Col([
-                                    html.Label("Company Size:", className="fw-bold mb-2"),
-                                    dcc.Dropdown(
-                                        id='company-size-filter',
-                                        options=[{'label': 'All', 'value': 'all'}] + 
-                                               [{'label': size_mapping(x), 'value': x} 
-                                                for x in sorted(df['company_size'].unique())],
-                                        value='all',
-                                        clearable=False,
-                                        style={'borderRadius': '8px'}
-                                    )
-                                ], md=3),
-                                dbc.Col([
-                                    html.Label("Employment Type:", className="fw-bold mb-2"),
-                                    dcc.Dropdown(
-                                        id='employment-filter',
-                                        options=[{'label': 'All', 'value': 'all'}] + 
-                                               [{'label': emp_mapping(x), 'value': x} 
-                                                for x in sorted(df['employment_type'].unique())],
-                                        value='all',
-                                        clearable=False,
-                                        style={'borderRadius': '8px'}
-                                    )
-                                ], md=3),
-                                dbc.Col([
-                                    html.Label("Salary Range (USD):", className="fw-bold mb-2"),
-                                    dcc.RangeSlider(
-                                        id='salary-range-filter',
-                                        min=df['salary_in_usd'].min(),
-                                        max=df['salary_in_usd'].max(),
-                                        value=[df['salary_in_usd'].min(), df['salary_in_usd'].max()],
-                                        marks={
-                                            df['salary_in_usd'].min(): f'${df["salary_in_usd"].min()/1000:.0f}K',
-                                            df['salary_in_usd'].max(): f'${df["salary_in_usd"].max()/1000:.0f}K'
-                                        },
-                                        tooltip={"placement": "bottom", "always_visible": True}
-                                    )
-                                ], md=3)
-                            ])
-                        ])
-                    ], className="shadow-sm border-0 mb-4")
-                ])
-            ]),
-            
-            # Summary Stats after filtering
-            dbc.Row([
-                dbc.Col([
-                    html.Div(id='filtered-stats', className="mb-4")
-                ])
-            ]),
-            
-            # Main Visualizations
-            dbc.Row([
-                dbc.Col([
-                    dbc.Card([
-                        dbc.CardHeader([
-                            html.H5([
-                                html.I(className="fas fa-chart-bar me-2"),
-                                "Salary Distribution"
-                            ], className="mb-0")
-                        ]),
-                        dbc.CardBody([
-                            dcc.Graph(id='salary-histogram')
-                        ])
-                    ], className="shadow-sm border-0")
-                ], md=6, className="mb-4"),
-                
-                dbc.Col([
-                    dbc.Card([
-                        dbc.CardHeader([
-                            html.H5([
-                                html.I(className="fas fa-box me-2"),
-                                "Salary by Experience Level"
-                            ], className="mb-0")
-                        ]),
-                        dbc.CardBody([
-                            dcc.Graph(id='salary-boxplot')
-                        ])
-                    ], className="shadow-sm border-0")
-                ], md=6, className="mb-4")
-            ]),
-            
-            dbc.Row([
-                dbc.Col([
-                    dbc.Card([
-                        dbc.CardHeader([
-                            html.H5([
-                                html.I(className="fas fa-chart-area me-2"),
-                                "Scatter Plot: Remote Ratio vs Salary"
-                            ], className="mb-0")
-                        ]),
-                        dbc.CardBody([
-                            dcc.Graph(id='scatter-plot')
-                        ])
-                    ], className="shadow-sm border-0")
-                ], md=8, className="mb-4"),
-                
-                dbc.Col([
-                    dbc.Card([
-                        dbc.CardHeader([
-                            html.H5([
-                                html.I(className="fas fa-chart-pie me-2"),
-                                "Top Job Titles"
-                            ], className="mb-0")
-                        ]),
-                        dbc.CardBody([
-                            dcc.Graph(id='job-titles-chart')
-                        ])
-                    ], className="shadow-sm border-0")
-                ], md=4, className="mb-4")
-            ]),
-            
-            dbc.Row([
-                dbc.Col([
-                    dbc.Card([
-                        dbc.CardHeader([
-                            html.H5([
-                                html.I(className="fas fa-fire me-2"),
-                                "Correlation Heatmap"
-                            ], className="mb-0")
-                        ]),
-                        dbc.CardBody([
-                            dcc.Graph(id='correlation-heatmap')
-                        ])
-                    ], className="shadow-sm border-0")
-                ], md=6, className="mb-4"),
-                
-                dbc.Col([
-                    dbc.Card([
-                        dbc.CardHeader([
-                            html.H5([
-                                html.I(className="fas fa-globe me-2"),
-                                "Average Salary by Country"
-                            ], className="mb-0")
-                        ]),
-                        dbc.CardBody([
-                            dcc.Graph(id='country-salary-chart')
-                        ])
-                    ], className="shadow-sm border-0")
-                ], md=6, className="mb-4")
+        # Header Section
+        dbc.Row([
+            dbc.Col([
+                html.Div([
+                    html.H1([
+                        html.I(className="fas fa-broom me-3", style={'color': colors['primary']}),
+                        "Data Cleaning & Preprocessing"
+                    ], className="text-center mb-3", style={'color': colors['darker']}),
+                    html.P([
+                        "Analisis kualitas data, deteksi outlier, dan proses pembersihan data ",
+                        "untuk memastikan dataset siap untuk modeling dan analisis."
+                    ], className="text-center text-muted mb-4 lead")
+                ], className="mb-5")
             ])
+        ]),
+        
+        # Data Quality Overview
+        dbc.Row([
+            dbc.Col([
+                create_quality_stat_card(
+                    "🎯", "Clean Dataset",
+                    "Data Quality", colors['primary']
+                )
+            ], md=3, className="mb-4"),
+            dbc.Col([
+                create_quality_stat_card(
+                    "🔍", f"{check_missing_values(df)}",
+                    "Missing Values", colors['secondary']
+                )
+            ], md=3, className="mb-4"),
+            dbc.Col([
+                create_quality_stat_card(
+                    "📊", f"{check_duplicates(df)}",
+                    "Duplicate Rows", colors['accent']
+                )
+            ], md=3, className="mb-4"),
+            dbc.Col([
+                create_quality_stat_card(
+                    "⚡", f"{check_outliers(df)} potential",
+                    "Outliers", colors['dark']
+                )
+            ], md=3, className="mb-4")
+        ]),
+        
+        # Missing Values Analysis
+        dbc.Row([
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardHeader([
+                        html.H4([
+                            html.I(className="fas fa-search me-2"),
+                            "Missing Values Analysis"
+                        ], className="mb-0")
+                    ]),
+                    dbc.CardBody([
+                        create_missing_values_analysis(df)
+                    ])
+                ], className="shadow-sm border-0")
+            ], md=6, className="mb-4"),
             
-        ], fluid=True, className="py-4")
-    ])
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardHeader([
+                        html.H4([
+                            html.I(className="fas fa-copy me-2"),
+                            "Duplicate Rows Check"
+                        ], className="mb-0")
+                    ]),
+                    dbc.CardBody([
+                        create_duplicate_analysis(df)
+                    ])
+                ], className="shadow-sm border-0")
+            ], md=6, className="mb-4")
+        ]),
+        
+        # Data Types and Distribution
+        dbc.Row([
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardHeader([
+                        html.H4([
+                            html.I(className="fas fa-list me-2"),
+                            "Data Types Information"
+                        ], className="mb-0")
+                    ]),
+                    dbc.CardBody([
+                        create_data_types_info(df)
+                    ])
+                ], className="shadow-sm border-0")
+            ], md=12, className="mb-4")
+        ]),
+        
+        # Outlier Detection
+        dbc.Row([
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardHeader([
+                        html.H4([
+                            html.I(className="fas fa-exclamation-triangle me-2"),
+                            "Outlier Detection (Salary Data)"
+                        ], className="mb-0")
+                    ]),
+                    dbc.CardBody([
+                        dcc.Graph(
+                            figure=create_outlier_boxplot(df, colors),
+                            config={'displayModeBar': False}
+                        )
+                    ])
+                ], className="shadow-sm border-0")
+            ], md=6, className="mb-4"),
+            
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardHeader([
+                        html.H4([
+                            html.I(className="fas fa-chart-area me-2"),
+                            "Salary Distribution Analysis"
+                        ], className="mb-0")
+                    ]),
+                    dbc.CardBody([
+                        dcc.Graph(
+                            figure=create_distribution_plot(df, colors),
+                            config={'displayModeBar': False}
+                        )
+                    ])
+                ], className="shadow-sm border-0")
+            ], md=6, className="mb-4")
+        ]),
+        
+        # Data Cleaning Recommendations
+        dbc.Row([
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardHeader([
+                        html.H4([
+                            html.I(className="fas fa-lightbulb me-2"),
+                            "Data Cleaning Recommendations"
+                        ], className="mb-0")
+                    ]),
+                    dbc.CardBody([
+                        create_cleaning_recommendations(df, colors)
+                    ])
+                ], className="shadow-sm border-0")
+            ], md=8, className="mb-4"),
+            
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardHeader([
+                        html.H4([
+                            html.I(className="fas fa-check-circle me-2"),
+                            "Cleaning Status"
+                        ], className="mb-0")
+                    ]),
+                    dbc.CardBody([
+                        create_cleaning_status(df, colors)
+                    ])
+                ], className="shadow-sm border-0")
+            ], md=4, className="mb-4")
+        ]),
+        
+        # Sample of Clean Data
+        dbc.Row([
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardHeader([
+                        html.H4([
+                            html.I(className="fas fa-table me-2"),
+                            "Sample of Cleaned Data"
+                        ], className="mb-0")
+                    ]),
+                    dbc.CardBody([
+                        create_sample_table(df)
+                    ])
+                ], className="shadow-sm border-0")
+            ])
+        ], className="mb-4")
+        
+    ], fluid=True, className="py-4")
 
-# Helper functions for mapping
-def exp_mapping(exp):
-    mapping = {'EN': 'Entry Level', 'MI': 'Mid Level', 'SE': 'Senior Level', 'EX': 'Executive Level'}
-    return mapping.get(exp, exp)
-
-def size_mapping(size):
-    mapping = {'S': 'Small', 'M': 'Medium', 'L': 'Large'}
-    return mapping.get(size, size)
-
-def emp_mapping(emp):
-    mapping = {'FT': 'Full Time', 'PT': 'Part Time', 'CT': 'Contract', 'FL': 'Freelance'}
-    return mapping.get(emp, emp)
-
-# Callbacks for interactivity
-@callback(
-    [Output('filtered-stats', 'children'),
-     Output('salary-histogram', 'figure'),
-     Output('salary-boxplot', 'figure'), 
-     Output('scatter-plot', 'figure'),
-     Output('job-titles-chart', 'figure'),
-     Output('correlation-heatmap', 'figure'),
-     Output('country-salary-chart', 'figure')],
-    [Input('experience-filter', 'value'),
-     Input('company-size-filter', 'value'),
-     Input('employment-filter', 'value'),
-     Input('salary-range-filter', 'value')]
-)
-def update_charts(exp_level, company_size, emp_type, salary_range):
-    # Import df and colors (you'll need to pass these or import from utils)
-    from utils.data_loader import load_data
-    df = load_data()
-    colors = {
-        'primary': '#10b981',
-        'secondary': '#34d399',
-        'accent': '#6ee7b7',
-        'light': '#a7f3d0',
-        'dark': '#059669'
-    }
-    
-    # Filter data
-    filtered_df = df.copy()
-    
-    if exp_level != 'all':
-        filtered_df = filtered_df[filtered_df['experience_level'] == exp_level]
-    if company_size != 'all':
-        filtered_df = filtered_df[filtered_df['company_size'] == company_size]
-    if emp_type != 'all':
-        filtered_df = filtered_df[filtered_df['employment_type'] == emp_type]
-    
-    filtered_df = filtered_df[
-        (filtered_df['salary_in_usd'] >= salary_range[0]) & 
-        (filtered_df['salary_in_usd'] <= salary_range[1])
-    ]
-    
-    # Create filtered stats
-    stats = create_filtered_stats(filtered_df, colors)
-    
-    # Create charts
-    histogram = create_histogram(filtered_df, colors)
-    boxplot = create_boxplot(filtered_df, colors)
-    scatter = create_scatter(filtered_df, colors)
-    job_chart = create_job_titles_chart(filtered_df, colors)
-    heatmap = create_correlation_heatmap(filtered_df, colors)
-    country_chart = create_country_chart(filtered_df, colors)
-    
-    return stats, histogram, boxplot, scatter, job_chart, heatmap, country_chart
-
-def create_filtered_stats(df, colors):
-    """Create filtered statistics cards"""
-    return dbc.Row([
-        dbc.Col([
-            dbc.Alert([
-                html.H6([
-                    html.I(className="fas fa-filter me-2"),
-                    f"Filtered Results: {len(df):,} records"
-                ], className="mb-2"),
-                html.P([
-                    f"Average Salary: ${df['salary_in_usd'].mean():,.0f} | ",
-                    f"Median: ${df['salary_in_usd'].median():,.0f} | ",
-                    f"Range: ${df['salary_in_usd'].min():,.0f} - ${df['salary_in_usd'].max():,.0f}"
-                ], className="mb-0")
-            ], color="primary", className="border-0", 
-               style={'backgroundColor': colors['light'] + '40'})
+def create_quality_stat_card(icon, value, label, color):
+    """Create data quality statistics card"""
+    return dbc.Card([
+        dbc.CardBody([
+            html.Div([
+                html.Div(icon, className="fs-2 mb-2"),
+                html.H4(value, className="fw-bold mb-1", style={'color': color}),
+                html.P(label, className="mb-0 text-muted fw-medium")
+            ], className="text-center")
         ])
-    ])
+    ], className="h-100 border-0 shadow-sm",
+       style={
+           'background': f'linear-gradient(145deg, #ffffff, #f8fffe)',
+           'borderLeft': f'4px solid {color}'
+       })
 
-def create_histogram(df, colors):
-    """Create salary distribution histogram"""
+def check_missing_values(df):
+    """Check for missing values"""
+    missing_count = df.isnull().sum().sum()
+    return "0 Found" if missing_count == 0 else f"{missing_count} Found"
+
+def check_duplicates(df):
+    """Check for duplicate rows"""
+    duplicate_count = df.duplicated().sum()
+    return "0 Found" if duplicate_count == 0 else f"{duplicate_count} Found"
+
+def check_outliers(df):
+    """Simple outlier detection using IQR method"""
+    if 'salary_in_usd' in df.columns:
+        Q1 = df['salary_in_usd'].quantile(0.25)
+        Q3 = df['salary_in_usd'].quantile(0.75)
+        IQR = Q3 - Q1
+        lower_bound = Q1 - 1.5 * IQR
+        upper_bound = Q3 + 1.5 * IQR
+        outliers = df[(df['salary_in_usd'] < lower_bound) | (df['salary_in_usd'] > upper_bound)]
+        return len(outliers)
+    return 0
+
+def create_missing_values_analysis(df):
+    """Create missing values analysis"""
+    missing_data = df.isnull().sum()
+    missing_percentage = (missing_data / len(df)) * 100
+    
+    if missing_data.sum() == 0:
+        return html.Div([
+            html.Div([
+                html.I(className="fas fa-check-circle fa-4x text-success mb-3"),
+                html.H5("No Missing Values", className="text-success"),
+                html.P("Dataset is complete! All columns have complete data with no missing values.")
+            ], className="text-center py-4")
+        ])
+    else:
+        missing_info = []
+        for col in missing_data[missing_data > 0].index:
+            missing_info.append(
+                html.Div([
+                    html.Strong(f"{col}: "),
+                    html.Span(f"{missing_data[col]} ({missing_percentage[col]:.1f}%)", 
+                            className="text-warning")
+                ], className="mb-2")
+            )
+        return html.Div(missing_info)
+
+def create_duplicate_analysis(df):
+    """Create duplicate analysis"""
+    duplicate_count = df.duplicated().sum()
+    
+    if duplicate_count == 0:
+        return html.Div([
+            html.Div([
+                html.I(className="fas fa-check-circle fa-4x text-success mb-3"),
+                html.H5("No Duplicates", className="text-success"),
+                html.P("Dataset has no duplicate rows. Each record is unique.")
+            ], className="text-center py-4")
+        ])
+    else:
+        return html.Div([
+            html.Div([
+                html.I(className="fas fa-exclamation-triangle fa-3x text-warning mb-3"),
+                html.H5(f"{duplicate_count} Duplicate Rows Found", className="text-warning"),
+                html.P("Consider removing duplicate rows before analysis.")
+            ], className="text-center py-4")
+        ])
+
+def create_data_types_info(df):
+    """Create data types information table"""
+    data_types_info = []
+    
+    for col in df.columns:
+        dtype = str(df[col].dtype)
+        unique_count = df[col].nunique()
+        null_count = df[col].isnull().sum()
+        
+        # Determine if column needs attention
+        status = "✅ Good"
+        if null_count > 0:
+            status = "⚠️ Has Nulls"
+        elif dtype == 'object' and unique_count > len(df) * 0.9:
+            status = "🔍 High Cardinality"
+        
+        data_types_info.append(
+            html.Tr([
+                html.Td(html.Strong(col)),
+                html.Td(dbc.Badge(dtype, color="primary" if "int" in dtype or "float" in dtype else "secondary")),
+                html.Td(f"{unique_count:,}"),
+                html.Td(f"{null_count}"),
+                html.Td(status)
+            ])
+        )
+    
+    return dbc.Table([
+        html.Thead([
+            html.Tr([
+                html.Th("Column Name"),
+                html.Th("Data Type"),
+                html.Th("Unique Values"),
+                html.Th("Missing Values"),
+                html.Th("Status")
+            ])
+        ]),
+        html.Tbody(data_types_info)
+    ], striped=True, hover=True, responsive=True)
+
+def create_outlier_boxplot(df, colors):
+    """Create boxplot for outlier detection"""
+    fig = px.box(
+        df, 
+        y='salary_in_usd',
+        title='Salary Distribution - Outlier Detection',
+        color_discrete_sequence=[colors['primary']]
+    )
+    
+    fig.update_layout(
+        yaxis_title="Salary (USD)",
+        height=400,
+        margin=dict(t=50, b=20, l=20, r=20),
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)'
+    )
+    
+    return fig
+
+def create_distribution_plot(df, colors):
+    """Create distribution plot"""
     fig = px.histogram(
-        df, x='salary_in_usd', nbins=30,
+        df, 
+        x='salary_in_usd',
+        nbins=30,
         title='Salary Distribution',
         color_discrete_sequence=[colors['primary']]
     )
     
+    # Add mean line
+    mean_salary = df['salary_in_usd'].mean()
     fig.add_vline(
-        x=df['salary_in_usd'].mean(), 
-        line_dash="dash", 
+        x=mean_salary,
+        line_dash="dash",
         line_color=colors['dark'],
-        annotation_text=f"Mean: ${df['salary_in_usd'].mean():,.0f}"
+        annotation_text=f"Mean: ${mean_salary:,.0f}"
     )
     
     fig.update_layout(
         xaxis_title="Salary (USD)",
         yaxis_title="Frequency",
-        height=350,
-        margin=dict(t=50, b=20, l=20, r=20),
-        paper_bgcolor='rgba(0,0,0,0)'
-    )
-    
-    return fig
-
-def create_boxplot(df, colors):
-    """Create salary boxplot by experience level"""
-    fig = px.box(
-        df, x='experience_level', y='salary_in_usd',
-        title='Salary Distribution by Experience Level',
-        color='experience_level',
-        color_discrete_sequence=[colors['primary'], colors['secondary'], 
-                               colors['accent'], colors['dark']]
-    )
-    
-    fig.update_xaxis(
-        ticktext=['Entry Level', 'Mid Level', 'Senior Level', 'Executive Level'],
-        tickvals=['EN', 'MI', 'SE', 'EX']
-    )
-    
-    fig.update_layout(
-        xaxis_title="Experience Level",
-        yaxis_title="Salary (USD)",
-        height=350,
+        height=400,
         margin=dict(t=50, b=20, l=20, r=20),
         paper_bgcolor='rgba(0,0,0,0)',
-        showlegend=False
+        plot_bgcolor='rgba(0,0,0,0)'
     )
     
     return fig
 
-def create_scatter(df, colors):
-    """Create scatter plot of remote ratio vs salary"""
-    fig = px.scatter(
-        df, x='remote_ratio', y='salary_in_usd',
-        color='experience_level', size='salary_in_usd',
-        title='Remote Work vs Salary by Experience Level',
-        color_discrete_sequence=[colors['primary'], colors['secondary'], 
-                               colors['accent'], colors['dark']],
-        hover_data=['job_title', 'company_location']
-    )
+def create_cleaning_recommendations(df, colors):
+    """Create data cleaning recommendations"""
+    recommendations = []
     
-    fig.update_layout(
-        xaxis_title="Remote Work Ratio (%)",
-        yaxis_title="Salary (USD)",
-        height=350,
-        margin=dict(t=50, b=20, l=20, r=20),
-        paper_bgcolor='rgba(0,0,0,0)'
-    )
+    # Check missing values
+    missing_count = df.isnull().sum().sum()
+    if missing_count == 0:
+        recommendations.append({
+            'icon': '✅',
+            'title': 'No Missing Values',
+            'description': 'Dataset is complete with no missing data.',
+            'priority': 'success'
+        })
+    else:
+        recommendations.append({
+            'icon': '⚠️',
+            'title': 'Handle Missing Values',
+            'description': f'{missing_count} missing values found. Consider imputation or removal.',
+            'priority': 'warning'
+        })
     
-    return fig
+    # Check duplicates
+    duplicate_count = df.duplicated().sum()
+    if duplicate_count == 0:
+        recommendations.append({
+            'icon': '✅',
+            'title': 'No Duplicate Rows',
+            'description': 'All records are unique.',
+            'priority': 'success'
+        })
+    else:
+        recommendations.append({
+            'icon': '🔄',
+            'title': 'Remove Duplicates',
+            'description': f'{duplicate_count} duplicate rows should be removed.',
+            'priority': 'warning'
+        })
+    
+    # Check outliers
+    outlier_count = check_outliers(df)
+    if outlier_count > 0:
+        recommendations.append({
+            'icon': '🎯',
+            'title': 'Review Outliers',
+            'description': f'{outlier_count} potential outliers detected. Investigate before modeling.',
+            'priority': 'info'
+        })
+    else:
+        recommendations.append({
+            'icon': '✅',
+            'title': 'No Significant Outliers',
+            'description': 'Data distribution looks normal.',
+            'priority': 'success'
+        })
+    
+    # Data types
+    recommendations.append({
+        'icon': '📊',
+        'title': 'Data Types Look Good',
+        'description': 'All columns have appropriate data types for analysis.',
+        'priority': 'success'
+    })
+    
+    recommendation_cards = []
+    for rec in recommendations:
+        color_map = {
+            'success': 'success',
+            'warning': 'warning', 
+            'info': 'info',
+            'danger': 'danger'
+        }
+        
+        recommendation_cards.append(
+            dbc.Alert([
+                html.H6([
+                    html.Span(rec['icon'], className="me-2"),
+                    rec['title']
+                ], className="mb-2"),
+                html.P(rec['description'], className="mb-0")
+            ], color=color_map[rec['priority']], className="mb-3")
+        )
+    
+    return html.Div(recommendation_cards)
 
-def create_job_titles_chart(df, colors):
-    """Create top job titles chart"""
-    top_jobs = df['job_title'].value_counts().head(8)
+def create_cleaning_status(df, colors):
+    """Create overall cleaning status"""
+    total_issues = 0
     
-    fig = px.bar(
-        x=top_jobs.values, y=top_jobs.index,
-        orientation='h',
-        title='Top Job Titles',
-        color=top_jobs.values,
-        color_continuous_scale=[[0, colors['light']], [1, colors['primary']]]
-    )
+    # Count issues
+    missing_count = df.isnull().sum().sum()
+    duplicate_count = df.duplicated().sum()
+    outlier_count = check_outliers(df)
     
-    fig.update_layout(
-        xaxis_title="Count",
-        yaxis_title="Job Title",
-        height=350,
-        margin=dict(t=50, b=20, l=20, r=20),
-        paper_bgcolor='rgba(0,0,0,0)',
-        showlegend=False
-    )
+    total_issues = missing_count + duplicate_count
     
-    return fig
+    if total_issues == 0:
+        status_color = "success"
+        status_icon = "fas fa-check-circle"
+        status_text = "Clean"
+        status_message = "Dataset is ready for analysis!"
+    elif total_issues <= 5:
+        status_color = "warning"
+        status_icon = "fas fa-exclamation-triangle"
+        status_text = "Minor Issues"
+        status_message = "A few issues need attention."
+    else:
+        status_color = "danger"
+        status_icon = "fas fa-times-circle"
+        status_text = "Needs Cleaning"
+        status_message = "Several issues require fixing."
+    
+    return html.Div([
+        html.Div([
+            html.I(className=f"{status_icon} fa-3x text-{status_color} mb-3"),
+            html.H4(status_text, className=f"text-{status_color} mb-2"),
+            html.P(status_message, className="mb-3"),
+            
+            # Issue summary
+            html.Hr(),
+            html.Small([
+                html.Strong("Summary:"), html.Br(),
+                f"Missing Values: {missing_count}", html.Br(),
+                f"Duplicates: {duplicate_count}", html.Br(),
+                f"Potential Outliers: {outlier_count}"
+            ], className="text-muted")
+        ], className="text-center")
+    ])
 
-def create_correlation_heatmap(df, colors):
-    """Create correlation heatmap"""
-    # Select numeric columns and encode categorical
-    df_encoded = df.copy()
-    df_encoded['experience_encoded'] = pd.Categorical(df['experience_level']).codes
-    df_encoded['company_size_encoded'] = pd.Categorical(df['company_size']).codes
-    df_encoded['employment_encoded'] = pd.Categorical(df['employment_type']).codes
+def create_sample_table(df):
+    """Create sample of cleaned data"""
+    sample_df = df.head(5)
     
-    numeric_cols = ['work_year', 'salary_in_usd', 'remote_ratio', 
-                   'experience_encoded', 'company_size_encoded', 'employment_encoded']
-    corr_matrix = df_encoded[numeric_cols].corr()
-    
-    fig = px.imshow(
-        corr_matrix,
-        color_continuous_scale=[[0, '#ffffff'], [0.5, colors['light']], [1, colors['primary']]],
-        title='Correlation Matrix',
-        aspect='auto'
+    return dash_table.DataTable(
+        data=sample_df.to_dict('records'),
+        columns=[{"name": i, "id": i} for i in sample_df.columns],
+        style_table={'overflowX': 'auto'},
+        style_cell={
+            'textAlign': 'left',
+            'fontSize': '12px',
+            'fontFamily': 'Inter, Arial, sans-serif',
+            'padding': '10px'
+        },
+        style_header={
+            'backgroundColor': '#10b981',
+            'color': 'white',
+            'fontWeight': 'bold'
+        },
+        style_data_conditional=[
+            {
+                'if': {'row_index': 'odd'},
+                'backgroundColor': '#f0fdf4'
+            }
+        ]
     )
-    
-    fig.update_layout(
-        height=350,
-        margin=dict(t=50, b=20, l=20, r=20),
-        paper_bgcolor='rgba(0,0,0,0)'
-    )
-    
-    return fig
-
-def create_country_chart(df, colors):
-    """Create average salary by country chart"""
-    country_salary = (df.groupby('company_location')['salary_in_usd']
-                     .mean()
-                     .sort_values(ascending=True)
-                     .tail(10))
-    
-    fig = px.bar(
-        x=country_salary.values, y=country_salary.index,
-        orientation='h',
-        title='Top 10 Countries by Average Salary',
-        color=country_salary.values,
-        color_continuous_scale=[[0, colors['light']], [1, colors['primary']]]
-    )
-    
-    fig.update_layout(
-        xaxis_title="Average Salary (USD)",
-        yaxis_title="Country",
-        height=350,
-        margin=dict(t=50, b=20, l=20, r=20),
-        paper_bgcolor='rgba(0,0,0,0)',
-        showlegend=False
-    )
-    
-    return fig

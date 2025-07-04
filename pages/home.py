@@ -4,9 +4,90 @@ Dashboard overview, quick statistics, and prediction section
 """ 
 
 import dash_bootstrap_components as dbc 
-from dash import html, dcc 
+from dash import html, dcc, Input, Output, State, callback
 import plotly.express as px 
 import plotly.graph_objects as go 
+import pandas as pd
+import joblib
+import numpy as np
+
+# Load the trained model for home page predictions
+try:
+    model = joblib.load('data/model.pkl')
+    print("Model loaded successfully for home page!")
+except FileNotFoundError:
+    print("Model file not found. Prediction will not work.")
+    model = None
+
+# =====================================================================
+#  BAGIAN BARU: Fungsi untuk Membuat Section 'Tentang Tim' Sesuai Gaya
+# =====================================================================
+def create_team_section_styled(colors):
+    """
+    Membuat bagian 'Tentang Tim' dengan layout gambar di samping teks,
+    sesuai dengan referensi yang diberikan.
+    """
+    
+    # --- Profil Lingga ---
+    lingga_profile = dbc.Row([
+        # Kolom Teks
+        dbc.Col([
+            html.H3("Lingga Dwi Satria Vigio", className="fw-bold"),
+            html.H6("LEAD DEVELOPER & MACHINE LEARNING", className="text-muted mb-3", style={'letterSpacing': '1px'}),
+            html.P(
+                "Bertanggung jawab atas arsitektur backend, pemrosesan data, "
+                "pengembangan model machine learning, dan memastikan semua "
+                "logika aplikasi berjalan dengan lancar dari data cleaning hingga deployment model.",
+                className="text-secondary"
+            ),
+            html.Div([
+                html.A(html.I(className="fas fa-envelope fa-lg"), href="mailto:lingga22si@mahasiswa.pcr.ac.id", className="text-dark me-3", title="Email"),
+                html.A(html.I(className="fab fa-linkedin fa-lg"), href="#", target="_blank", className="text-dark me-3", title="LinkedIn"),
+                html.A(html.I(className="fab fa-github fa-lg"), href="https://github.com/lingga", target="_blank", className="text-dark", title="GitHub")
+            ], className="mt-4")
+        ], md=7, className="d-flex flex-column justify-content-center"),
+
+        # Kolom Gambar
+        dbc.Col([
+            # Ganti 'lingga.png' dengan nama file gambar Anda di folder /assets
+            html.Img(src="/assets/lingga.png", className="rounded-circle img-fluid shadow-lg", style={'border': f'5px solid {colors["primary"]}'})
+        ], md=5)
+    ], className="align-items-center mb-5")
+    
+    # --- Profil Azzahara ---
+    azzahara_profile = dbc.Row([
+        # Kolom Gambar (di kiri untuk variasi)
+        dbc.Col([
+            # Ganti 'azzahara.png' dengan nama file gambar Anda di folder /assets
+            html.Img(src="/assets/azzahara.png", className="rounded-circle img-fluid shadow-lg", style={'border': f'5px solid {colors["primary"]}'})
+        ], md=5, className="order-md-1"),
+        
+        # Kolom Teks (di kanan untuk variasi)
+        dbc.Col([
+            html.H3("Azzahara Tunisyah", className="fw-bold"),
+            html.H6("LEAD ANALYST & UI/UX DESIGNER", className="text-muted mb-3", style={'letterSpacing': '1px'}),
+            html.P(
+                "Memimpin analisis data eksploratif (EDA), visualisasi data, dan storytelling. "
+                "Bertugas merancang user interface yang intuitif dan menarik, serta menerjemahkan "
+                "data kompleks menjadi insight yang mudah dipahami.",
+                className="text-secondary"
+            ),
+            html.Div([
+                html.A(html.I(className="fas fa-envelope fa-lg"), href="mailto:azzahara22si@mahasiswa.pcr.ac.id", className="text-dark me-3", title="Email"),
+                html.A(html.I(className="fab fa-linkedin fa-lg"), href="#", target="_blank", className="text-dark me-3", title="LinkedIn"),
+                html.A(html.I(className="fab fa-github fa-lg"), href="https://github.com/azzahara", target="_blank", className="text-dark", title="GitHub")
+            ], className="mt-4")
+        ], md=7, className="d-flex flex-column justify-content-center order-md-2")
+        
+    ], className="align-items-center mb-5")
+
+    return dbc.Container([
+        html.Hr(className="my-5"),
+        html.H2("Tim Pengembang", className="text-center mb-5 fw-bold display-5", style={'color': colors['darker']}),
+        lingga_profile,
+        azzahara_profile
+    ], fluid=True, className="py-5 bg-light")
+
 
 def layout(df, colors): 
     """Create home page layout""" 
@@ -88,103 +169,173 @@ def layout(df, colors):
             ], md=6, className="mb-4") 
         ]), 
          
-        # Salary Prediction Section (DIPINDAH KE SINI - SETELAH CHARTS) 
+        # SALARY PREDICTION SECTION - UPDATED WITH INTEGRATED FORM
         dbc.Row([ 
             dbc.Col([ 
                 html.H3([ 
                     html.I(className="fas fa-crystal-ball me-3", style={'color': colors['primary']}), 
-                    "Prediksi Gaji Data Sience" 
+                    "Prediksi Gaji Data Science" 
                 ], className="text-center mb-4", style={'color': colors['darker']}) 
             ]) 
         ], className="mt-5"), 
 
         dbc.Row([ 
-            dbc.Col([ 
-                dbc.Card([ 
-                    dbc.CardBody([ 
-                        dbc.Row([ 
-                            # Left Side - Description 
-                            dbc.Col([ 
-                                html.Div([ 
-                                    html.H4([ 
-                                        html.I(className="fas fa-magic me-2", style={'color': colors['primary']}), 
-                                        "Prediksi Gaji Anda" 
-                                    ], className="fw-bold mb-3"), 
-                                    html.P([ 
-                                        "Gunakan model Machine Learning kami untuk memprediksi gaji Data Scientist ", 
-                                        "berdasarkan pengalaman, lokasi, tipe pekerjaan, dan faktor lainnya." 
-                                    ], className="mb-3 text-muted"), 
-                                     
-                                    # Features List 
-                                    html.Ul([ 
-                                        html.Li([ 
-                                            html.I(className="fas fa-check-circle me-2 text-success"), 
-                                            "Random Forest Model dengan akurasi 100%" 
-                                        ], className="mb-2"), 
-                                        html.Li([ 
-                                            html.I(className="fas fa-check-circle me-2 text-success"), 
-                                            "Berdasarkan 3,755+ data real" 
-                                        ], className="mb-2"), 
-                                        html.Li([ 
-                                            html.I(className="fas fa-check-circle me-2 text-success"), 
-                                            "Prediksi instant dan akurat" 
-                                        ], className="mb-2"), 
-                                        html.Li([ 
-                                            html.I(className="fas fa-check-circle me-2 text-success"), 
-                                            "Breakdown gaji bulanan & harian" 
-                                        ]) 
-                                    ], className="list-unstyled mb-4"), 
-                                     
-                                    dbc.Button([ 
-                                        html.I(className="fas fa-rocket me-2"), 
-                                        "Mulai Prediksi" 
-                                    ],  
-                                    color="primary",  
-                                    size="lg",  
-                                    href="/prediction", 
-                                    style={'background': colors['gradient'], 'border': 'none'}) 
-                                ]) 
-                            ], md=8), 
-                             
-                            # Right Side - Preview/Demo (UPDATED) 
-                            dbc.Col([ 
-                                html.Div([ 
-                                    # Image preview - larger and touch bottom (NO "Sample Prediction" text) 
-                                    html.Div([ 
-                                        html.Img( 
-                                            src="/assets/image.png", 
-                                            style={ 
-                                                'width': '100%', 
-                                                'height': 'auto', 
-                                                'maxWidth': '350px',  # Diperbesar dari 300px 
-                                                'borderRadius': '10px 10px 0 0',  # Hanya rounded top 
-                                                'display': 'block', 
-                                                'marginBottom': '0'  # No margin bottom 
-                                            }, 
-                                            className="img-fluid" 
-                                        ) 
-                                    ], className="text-center",  
-                                       style={ 
-                                           'height': '100%',  
-                                           'display': 'flex',  
-                                           'alignItems': 'flex-end', 
-                                           'justifyContent': 'center' 
-                                       }) 
-                                     
-                                ], style={'height': '100%'})  # Full height container 
-                            ], md=4) 
-                        ]) 
-                    ], style={ 
-                        'backgroundColor': '#ffffff !important', 
-                        'background': '#ffffff !important' 
-                    }) 
-                ], className="shadow-sm border-0 prediction-card", 
-                   style={ 
-                       'backgroundColor': '#ffffff !important', 
-                       'background': '#ffffff !important', 
-                       'borderTop': f'4px solid {colors["primary"]}' 
-                   }) 
-            ]) 
+            # Left Column - Form Input
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardHeader([
+                        html.H4([
+                            html.I(className="fas fa-sliders-h me-2"),
+                            "Input Parameters"
+                        ], className="mb-0")
+                    ]),
+                    dbc.CardBody([
+                        # Row 1: Experience & Employment Type
+                        dbc.Row([
+                            dbc.Col([
+                                html.Label("Experience Level", className="fw-bold mb-2"),
+                                dcc.Dropdown(
+                                    id='home-experience-dropdown',
+                                    options=[
+                                        {'label': 'Entry Level', 'value': 'EN'},
+                                        {'label': 'Mid Level', 'value': 'MI'},
+                                        {'label': 'Senior Level', 'value': 'SE'},
+                                        {'label': 'Executive Level', 'value': 'EX'}
+                                    ],
+                                    value='SE',
+                                    className="mb-3"
+                                )
+                            ], md=6),
+                            dbc.Col([
+                                html.Label("Employment Type", className="fw-bold mb-2"),
+                                dcc.Dropdown(
+                                    id='home-employment-dropdown',
+                                    options=[
+                                        {'label': 'Full-time', 'value': 'FT'},
+                                        {'label': 'Part-time', 'value': 'PT'},
+                                        {'label': 'Contract', 'value': 'CT'},
+                                        {'label': 'Freelance', 'value': 'FL'}
+                                    ],
+                                    value='FT',
+                                    className="mb-3"
+                                )
+                            ], md=6)
+                        ]),
+                        
+                        # Row 2: Job Title & Company Size
+                        dbc.Row([
+                            dbc.Col([
+                                html.Label("Job Title", className="fw-bold mb-2"),
+                                dcc.Dropdown(
+                                    id='home-job-title-dropdown',
+                                    options=get_job_title_options(df),
+                                    value='Data Scientist',
+                                    className="mb-3"
+                                )
+                            ], md=6),
+                            dbc.Col([
+                                html.Label("Company Size", className="fw-bold mb-2"),
+                                dcc.Dropdown(
+                                    id='home-company-size-dropdown',
+                                    options=[
+                                        {'label': 'Small (S)', 'value': 'S'},
+                                        {'label': 'Medium (M)', 'value': 'M'},
+                                        {'label': 'Large (L)', 'value': 'L'}
+                                    ],
+                                    value='M',
+                                    className="mb-3"
+                                )
+                            ], md=6)
+                        ]),
+                        
+                        # Row 3: Location & Work Year
+                        dbc.Row([
+                            dbc.Col([
+                                html.Label("Company Location", className="fw-bold mb-2"),
+                                dcc.Dropdown(
+                                    id='home-location-dropdown',
+                                    options=get_location_options(df),
+                                    value='US',
+                                    className="mb-3"
+                                )
+                            ], md=6),
+                            dbc.Col([
+                                html.Label("Work Year", className="fw-bold mb-2"),
+                                dcc.Dropdown(
+                                    id='home-work-year-dropdown',
+                                    options=[
+                                        {'label': '2020', 'value': 2020},
+                                        {'label': '2021', 'value': 2021},
+                                        {'label': '2022', 'value': 2022},
+                                        {'label': '2023', 'value': 2023},
+                                        {'label': '2024', 'value': 2024}
+                                    ],
+                                    value=2023,
+                                    className="mb-3"
+                                )
+                            ], md=6)
+                        ]),
+                        
+                        # Row 4: Remote Ratio
+                        dbc.Row([
+                            dbc.Col([
+                                html.Label("Remote Work Ratio (%)", className="fw-bold mb-2"),
+                                dcc.Slider(
+                                    id='home-remote-slider',
+                                    min=0,
+                                    max=100,
+                                    step=25,
+                                    value=50,
+                                    marks={
+                                        0: '0%',
+                                        25: '25%',
+                                        50: '50%',
+                                        75: '75%',
+                                        100: '100%'
+                                    },
+                                    className="mb-4"
+                                )
+                            ])
+                        ]),
+                        
+                        # Predict Button
+                        dbc.Row([
+                            dbc.Col([
+                                dbc.Button([
+                                    html.I(className="fas fa-magic me-2"),
+                                    "Prediksi Gaji"
+                                ], 
+                                id='home-predict-button',
+                                color="primary",
+                                size="lg",
+                                className="w-100",
+                                style={'background': colors['gradient'], 'border': 'none'})
+                            ])
+                        ])
+                    ])
+                ], className="shadow-sm border-0")
+            ], md=5),
+            
+            # Right Column - Results
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardHeader([
+                        html.H4([
+                            html.I(className="fas fa-chart-line me-2"),
+                            "Hasil Prediksi"
+                        ], className="mb-0")
+                    ]),
+                    dbc.CardBody([
+                        html.Div(id='home-prediction-results', children=[
+                            html.Div([
+                                html.I(className="fas fa-robot fa-4x text-muted mb-3"),
+                                html.H5("Siap Memprediksi", className="text-muted"),
+                                html.P("Isi parameter di sebelah kiri dan klik 'Prediksi Gaji' untuk memulai.")
+                            ], className="text-center py-5")
+                        ])
+                    ])
+                ], className="shadow-sm border-0")
+            ], md=7)
         ], className="mb-5"), 
          
         # Key Insights Section   
@@ -260,16 +411,168 @@ def layout(df, colors):
                 ) 
             ], md=4, className="mb-3") 
         ]), 
-         
+                 
         # Download Section 
         dbc.Row([ 
             dbc.Col([ 
                 html.Hr(className="my-5"), 
                 create_download_section(colors) 
             ]) 
-        ]) 
+        ]),
+
+        # =====================================================================
+        #  BAGIAN TIM DIPINDAHKAN KE SINI (POSISI AKHIR)
+        # =====================================================================
+        create_team_section_styled(colors),
          
-    ], fluid=True, className="py-4") 
+    ], fluid=True, className="py-4")
+
+# Helper functions for dropdown options
+def get_job_title_options(df):
+    """Get job title options from dataset"""
+    job_titles = sorted(df['job_title'].unique())
+    return [{'label': title, 'value': title} for title in job_titles[:20]]  # Top 20
+
+def get_location_options(df):
+    """Get location options from dataset"""
+    locations = sorted(df['company_location'].unique())
+    return [{'label': loc, 'value': loc} for loc in locations]
+
+# Callback for home page prediction
+@callback(
+    Output('home-prediction-results', 'children'),
+    Input('home-predict-button', 'n_clicks'),
+    [
+        State('home-work-year-dropdown', 'value'),
+        State('home-experience-dropdown', 'value'),
+        State('home-employment-dropdown', 'value'),
+        State('home-job-title-dropdown', 'value'),
+        State('home-location-dropdown', 'value'),
+        State('home-company-size-dropdown', 'value'),
+        State('home-remote-slider', 'value')
+    ],
+    prevent_initial_call=True
+)
+def predict_salary_home(n_clicks, work_year, experience, employment, job_title, location, company_size, remote_ratio):
+    """Predict salary based on input parameters for home page"""
+    if n_clicks is None or model is None:
+        return html.Div([
+            dbc.Alert([
+                html.I(className="fas fa-exclamation-triangle me-2"),
+                "Model tidak tersedia. Pastikan model sudah dilatih."
+            ], color="warning")
+        ])
+    
+    try:
+        # Create input DataFrame (sesuaikan dengan fitur yang digunakan model Anda)
+        input_data = pd.DataFrame({
+            'work_year': [work_year],
+            'experience_level': [experience],
+            'employment_type': [employment],
+            'job_title': [job_title],
+            'company_location': [location],
+            'company_size': [company_size],
+            'remote_ratio': [remote_ratio]
+        })
+        
+        # Make prediction
+        predicted_salary = model.predict(input_data)[0]
+        
+        # Categorize salary
+        if predicted_salary < 50000:
+            category = "Low"
+            category_color = "warning"
+            category_icon = "fas fa-arrow-down"
+        elif predicted_salary <= 100000:
+            category = "Medium"
+            category_color = "info"
+            category_icon = "fas fa-minus"
+        else:
+            category = "High"
+            category_color = "success"
+            category_icon = "fas fa-arrow-up"
+        
+        return html.Div([
+            # Main Prediction
+            html.Div([
+                html.H2(f"${predicted_salary:,.0f}", 
+                       className="display-4 fw-bold text-primary mb-2"),
+                html.H5("Prediksi Gaji Tahunan", className="text-muted mb-3"),
+                
+                dbc.Badge([
+                    html.I(className=f"{category_icon} me-2"),
+                    f"{category} Range"
+                ], color=category_color, className="mb-4 p-3 fs-6")
+            ], className="text-center mb-4"),
+            
+            # Salary Breakdown
+            html.Hr(),
+            html.Div([
+                dbc.Row([
+                    dbc.Col([
+                        html.Small("Bulanan", className="text-muted d-block"),
+                        html.Strong(f"${predicted_salary/12:,.0f}", className="h5")
+                    ], className="text-center"),
+                    dbc.Col([
+                        html.Small("Mingguan", className="text-muted d-block"),
+                        html.Strong(f"${predicted_salary/52:,.0f}", className="h5")
+                    ], className="text-center"),
+                    dbc.Col([
+                        html.Small("Harian", className="text-muted d-block"),
+                        html.Strong(f"${predicted_salary/365:,.0f}", className="h5")
+                    ], className="text-center")
+                ])
+            ], className="mt-3"),
+            
+            # Input Summary
+            html.Hr(),
+            html.Div([
+                html.H6("Parameter Input:", className="fw-bold mb-2"),
+                html.Div([
+                    dbc.Badge(f"Experience: {get_experience_label(experience)}", color="light", text_color="dark", className="me-2 mb-1"),
+                    dbc.Badge(f"Employment: {get_employment_label(employment)}", color="light", text_color="dark", className="me-2 mb-1"),
+                    dbc.Badge(f"Company: {company_size}", color="light", text_color="dark", className="me-2 mb-1"),
+                    dbc.Badge(f"Remote: {remote_ratio}%", color="light", text_color="dark", className="me-2 mb-1"),
+                    dbc.Badge(f"Location: {location}", color="light", text_color="dark", className="me-2 mb-1")
+                ])
+            ], className="mt-3"),
+            
+            # Confidence Note
+            html.Hr(),
+            html.Div([
+                html.I(className="fas fa-shield-alt me-2 text-success"),
+                html.Small("Prediksi berdasarkan Random Forest model dengan akurasi 100% kategori",
+                          className="text-muted")
+            ], className="text-center mt-3"),
+            
+            # Action Buttons
+            html.Div([
+                dbc.Button([
+                    html.I(className="fas fa-chart-line me-2"),
+                    "Lihat Detail"
+                ], href="/prediction", color="outline-primary", size="sm", className="me-2"),
+                dbc.Button([
+                    html.I(className="fas fa-share me-2"),
+                    "Bagikan"
+                ], color="outline-secondary", size="sm")
+            ], className="text-center mt-3")
+        ])
+        
+    except Exception as e:
+        return dbc.Alert([
+            html.H5("Prediksi Error", className="alert-heading"),
+            html.P(f"Error: {str(e)}"),
+            html.P("Silakan periksa file model dan parameter input.")
+        ], color="danger")
+
+# Helper functions for labels
+def get_experience_label(exp):
+    mapping = {'EN': 'Entry Level', 'MI': 'Mid Level', 'SE': 'Senior Level', 'EX': 'Executive Level'}
+    return mapping.get(exp, exp)
+
+def get_employment_label(emp):
+    mapping = {'FT': 'Full-time', 'PT': 'Part-time', 'CT': 'Contract', 'FL': 'Freelance'}
+    return mapping.get(emp, emp)
 
 def create_stat_card(icon, value, label, color): 
     """Create animated statistics card""" 
@@ -371,7 +674,6 @@ def create_country_chart(df, colors):
 def create_key_insights(df, colors): 
     """Create key insights section""" 
      
-    # Calculate key metrics 
     avg_salary = df['salary_in_usd'].mean() 
     max_salary = df['salary_in_usd'].max() 
     min_salary = df['salary_in_usd'].min() 
@@ -383,23 +685,23 @@ def create_key_insights(df, colors):
     insights = [ 
         { 
             'icon': '💰', 
-            'title': 'Salary Range', 
+            'title': 'Rentang Gaji', 
             'text': f'Gaji berkisar dari ${min_salary:,.0f} hingga ${max_salary:,.0f} dengan rata-rata ${avg_salary:,.0f}' 
         }, 
         { 
             'icon': '📈', 
-            'title': 'Experience Premium', 
-            'text': f'Senior level mendapat gaji {(exp_salary.get("SE", 0) / exp_salary.get("EN", 1)):.1f}x lebih tinggi dari entry level' 
+            'title': 'Premium Pengalaman', 
+            'text': f'Level senior mendapat gaji {(exp_salary.get("SE", 0) / exp_salary.get("EN", 1)):.1f}x lebih tinggi dari level pemula' 
         }, 
         { 
             'icon': '🌟', 
-            'title': 'Top Job Title', 
-            'text': f'{top_job} adalah posisi paling umum dengan {df[df["job_title"] == top_job].shape[0]} openings' 
+            'title': 'Jabatan Teratas', 
+            'text': f'{top_job} adalah posisi paling umum dengan {df[df["job_title"] == top_job].shape[0]} lowongan' 
         }, 
         { 
             'icon': '🌍', 
-            'title': 'Leading Country', 
-            'text': f'{top_country} memimpin dengan {df[df["company_location"] == top_country].shape[0]} companies' 
+            'title': 'Negara Terkemuka', 
+            'text': f'{top_country} memimpin dengan {df[df["company_location"] == top_country].shape[0]} perusahaan' 
         } 
     ] 
      
@@ -438,7 +740,6 @@ def create_download_section(colors):
                     html.Div([ 
                         html.H5("📥 Quick Downloads", className="text-primary fw-bold mb-4 text-center"), 
                          
-                        # Download Cards 
                         dbc.Row([ 
                             dbc.Col([ 
                                 dbc.Card([ 
@@ -446,11 +747,11 @@ def create_download_section(colors):
                                         html.Div([ 
                                             html.I(className="fas fa-file-csv fa-2x text-success mb-3"), 
                                             html.H6("Dataset (CSV)", className="fw-bold mb-2"), 
-                                            html.P("Download complete dataset", className="text-muted small mb-3"), 
+                                            html.P("Unduh dataset lengkap", className="text-muted small mb-3"), 
                                             dbc.Button([ 
                                                 html.I(className="fas fa-download me-2"), 
-                                                "Download CSV" 
-                                            ], color="success", size="sm", className="w-100", id="btn-download-csv-home") # <-- ID DITAMBAHKAN DI SINI
+                                                "Unduh CSV" 
+                                            ], color="success", size="sm", className="w-100", id="btn-download-csv-home")
                                         ], className="text-center") 
                                     ]) 
                                 ], className="h-100 shadow-sm border-0", 
@@ -462,11 +763,11 @@ def create_download_section(colors):
                                     dbc.CardBody([ 
                                         html.Div([ 
                                             html.I(className="fas fa-chart-line fa-2x text-info mb-3"), 
-                                            html.H6("Analysis Report", className="fw-bold mb-2"), 
-                                            html.P("Summary insights & findings", className="text-muted small mb-3"), 
+                                            html.H6("Laporan Analisis", className="fw-bold mb-2"), 
+                                            html.P("Ringkasan insight & temuan", className="text-muted small mb-3"), 
                                             dbc.Button([ 
                                                 html.I(className="fas fa-file-pdf me-2"), 
-                                                "Download PDF" 
+                                                "Unduh PDF" 
                                             ], color="info", size="sm", className="w-100") 
                                         ], className="text-center") 
                                     ]) 
@@ -479,11 +780,11 @@ def create_download_section(colors):
                                     dbc.CardBody([ 
                                         html.Div([ 
                                             html.I(className="fas fa-robot fa-2x text-warning mb-3"), 
-                                            html.H6("ML Model", className="fw-bold mb-2"), 
-                                            html.P("Trained prediction model", className="text-muted small mb-3"), 
+                                            html.H6("Model ML", className="fw-bold mb-2"), 
+                                            html.P("Model prediksi yang sudah dilatih", className="text-muted small mb-3"), 
                                             dbc.Button([ 
                                                 html.I(className="fas fa-download me-2"), 
-                                                "Download Model" 
+                                                "Unduh Model" 
                                             ], color="warning", size="sm", className="w-100") 
                                         ], className="text-center") 
                                     ]) 
@@ -497,11 +798,10 @@ def create_download_section(colors):
              
             html.Hr(), 
              
-            # Additional Info 
             html.Div([ 
                 html.P([ 
                     html.I(className="fas fa-info-circle me-2 text-primary"), 
-                    "Semua file download tersedia dalam format yang kompatibel dengan tools analisis populer" 
+                    "Semua file unduhan tersedia dalam format yang kompatibel dengan alat analisis populer." 
                 ], className="text-center text-muted mb-0 small") 
             ]) 
         ]) 
