@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python:*)",
+      "WebFetch(domain:opendata.jabarprov.go.id)",
+      "Bash(ls:*)",
+      "Bash(source:*)",
+      "Bash(pip install:*)",
+      "Bash(apt:*)",
+      "Bash(apt install:*)",
+      "Bash(# Experience levels (column 2)\necho \"\"=== EXPERIENCE LEVELS ===\"\"\ncut -d'','' -f2 data/ds_salaries.csv | sort | uniq -c | sort -nr\n\necho -e \"\"\\n=== EMPLOYMENT TYPES ===\"\"\n# Employment types (column 3)\ncut -d'','' -f3 data/ds_salaries.csv | sort | uniq -c | sort -nr\n\necho -e \"\"\\n=== COMPANY SIZES ===\"\"\n# Company sizes (column 11)\ncut -d'','' -f11 data/ds_salaries.csv | sort | uniq -c | sort -nr)",
+      "Bash(# Job titles (column 4)\necho \"\"=== JOB TITLES ===\"\"\ncut -d'','' -f4 data/ds_salaries.csv | grep -v \"\"job_title\"\" | sort | uniq -c | sort -nr\n\necho -e \"\"\\n=== TOP 20 JOB TITLES ===\"\"\ncut -d'','' -f4 data/ds_salaries.csv | grep -v \"\"job_title\"\" | sort | uniq -c | sort -nr | head -20)",
+      "Bash(# Company locations (column 10)\necho \"\"=== COMPANY LOCATIONS ===\"\"\ncut -d'','' -f10 data/ds_salaries.csv | grep -v \"\"company_location\"\" | sort | uniq -c | sort -nr\n\necho -e \"\"\\n=== TOP 20 COMPANY LOCATIONS ===\"\"\ncut -d'','' -f10 data/ds_salaries.csv | grep -v \"\"company_location\"\" | sort | uniq -c | sort -nr | head -20)",
+      "Bash(# Work years and remote ratios\necho \"\"=== WORK YEARS ===\"\"\ncut -d'','' -f1 data/ds_salaries.csv | grep -v \"\"work_year\"\" | sort | uniq -c | sort -nr\n\necho -e \"\"\\n=== REMOTE RATIOS ===\"\"\ncut -d'','' -f9 data/ds_salaries.csv | grep -v \"\"remote_ratio\"\" | sort | uniq -c | sort -nr)",
+      "Bash(rm:*)",
+      "Bash(pip3 install:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "WebFetch(domain:www.kaggle.com)",
+      "WebFetch(domain:colab.research.google.com)",
+      "Bash(mv:*)",
+      "Bash(chmod:*)",
+      "Bash(./switch_app.sh:*)",
+      "Bash(diff:*)",
+      "Bash(./venv/Scripts/python:*)"
+    ],
+    "deny": []
+  }
+}
